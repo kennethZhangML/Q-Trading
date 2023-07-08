@@ -97,7 +97,7 @@ class TradingEnv(gym.Env):
 
         return reward
 
-    def render(self, mode='human'):
+    def render(self, mode = 'human'):
         pass
 
     def close(self):
@@ -105,8 +105,8 @@ class TradingEnv(gym.Env):
 
 if __name__ == "__main__":
     gym.envs.register(
-        id='TradingEnv-v0',
-        entry_point='tradingEnv:TradingEnv',
+        id = 'TradingEnv-v0',
+        entry_point = 'tradingEnv:TradingEnv',
     )
 
     env = gym.make('TradingEnv-v0', new_step_api = True)
