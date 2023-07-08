@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd 
 import warnings
 
+import matplotlib.pyplot as plt 
+import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation
+
 warnings.filterwarnings("ignore", category = DeprecationWarning, module = "gym")
 warnings.filterwarnings("ignore", category = UserWarning, module = "gym")
 
@@ -17,11 +21,16 @@ class TradingEnv(gym.Env):
         self.action_space = spaces.Discrete(3) 
 
         self.current_step = 0
-        self.max_steps = 100  
+        self.max_steps = 10 
         self.prices = pd.DataFrame({'Close': np.random.rand(self.max_steps)}, 
                                     index = pd.date_range(start = '2023-01-01', periods = self.max_steps))
+        
         self.stop_loss_level = None
         self.take_profit_level = None
+
+        self.fig, self.ax = plt.subplots()
+        self.line = self.ax.plot([], [])
+        self.animation = None 
 
     def reset(self, **kwargs):
         self.current_step = 0
@@ -54,7 +63,7 @@ class TradingEnv(gym.Env):
             start_date = self.prices.index[start_index].strftime('%Y-%m-%d')
             end_date = self.prices.index[end_index - 1].strftime('%Y-%m-%d')
 
-            symbol = 'AAPL'  
+            symbol = 'AAPL'  # test using AAPL ticker (we can customize later on) :)
 
             stock_data = yf.download(symbol, start=start_date, end=end_date)
             observation = stock_data['Close'].values
@@ -97,8 +106,33 @@ class TradingEnv(gym.Env):
 
         return reward
 
+    # STILL WORKING ON THIS :) (help.)
     def render(self, mode = 'human'):
-        pass
+        fig, ax = plt.subplots()
+        self.ax = ax
+
+        ax.set_xlim(self.prices.index[0], self.prices.index[-1])
+        ax.set_ylim(np.min(self.prices['Close']), np.max(self.prices['Close']))
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Price')
+        ax.set_title('Stock Price')
+
+        self.line, = ax.plot([], [])
+        plt.ion() 
+
+        for i in range(len(self.prices)):
+            self._animate(i)
+            plt.pause(0.1)
+
+        plt.ioff()  
+        plt.show()
+
+    
+    def _animate(self, i):
+        current_prices = self.prices.iloc[:i+1]['Close']
+        self.line.set_data(current_prices.index, current_prices.values)
+        self.ax.relim()
+        self.ax.autoscale_view()
 
     def close(self):
         pass
@@ -122,5 +156,6 @@ if __name__ == "__main__":
 
         if done:
             break
-
+    
+    env.render()
     env.close()
