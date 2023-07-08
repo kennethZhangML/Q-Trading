@@ -14,9 +14,10 @@ warnings.filterwarnings("ignore", category = DeprecationWarning, module = "gym")
 warnings.filterwarnings("ignore", category = UserWarning, module = "gym")
 
 class TradingEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, ticker):
         super(TradingEnv, self).__init__()
 
+        self.ticker = ticker 
         self.observation_space = spaces.Box(low = 0, high = 1, shape = (10,))
         self.action_space = spaces.Discrete(3) 
 
@@ -63,7 +64,7 @@ class TradingEnv(gym.Env):
             start_date = self.prices.index[start_index].strftime('%Y-%m-%d')
             end_date = self.prices.index[end_index - 1].strftime('%Y-%m-%d')
 
-            symbol = 'AAPL'  # test using AAPL ticker (we can customize later on) :)
+            symbol = self.ticker  
 
             stock_data = yf.download(symbol, start=start_date, end=end_date)
             observation = stock_data['Close'].values
@@ -143,7 +144,9 @@ if __name__ == "__main__":
         entry_point = 'tradingEnv:TradingEnv',
     )
 
-    env = gym.make('TradingEnv-v0', new_step_api = True)
+    user_ticker = input("Enter a ticker symbol: ")
+
+    env = gym.make('TradingEnv-v0', ticker = user_ticker, new_step_api = True)
     observation = env.reset()
 
     for _ in range(env.max_steps):
@@ -157,5 +160,7 @@ if __name__ == "__main__":
         if done:
             break
     
+    # Broken* -> todo
     env.render()
+    
     env.close()
