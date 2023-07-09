@@ -72,7 +72,7 @@ class TradingEnv(gym.Env):
 
             symbol = self.ticker  
 
-            stock_data = yf.download(symbol, start=start_date, end=end_date)
+            stock_data = yf.download(symbol, start = start_date, end = end_date)
             observation = stock_data['Close'].values
 
         return observation
