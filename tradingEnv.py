@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category = DeprecationWarning, module = "gym")
 warnings.filterwarnings("ignore", category = UserWarning, module = "gym")
 
 class TradingEnv(gym.Env):
-    def __init__(self, ticker):
+    def __init__(self, ticker, start_date, end_date):
         super(TradingEnv, self).__init__()
 
         self.ticker = ticker 
@@ -22,10 +22,10 @@ class TradingEnv(gym.Env):
         self.action_space = spaces.Discrete(3) 
 
         self.current_step = 0
-        self.max_steps = 1000
-        self.prices = pd.DataFrame({'Close': np.random.rand(self.max_steps)}, 
-                                    index = pd.date_range(start = '2023-01-01', periods = self.max_steps))
-        
+        self.start_date = start_date 
+        self.end_date = end_date
+        self.prices = self._download_prices()
+        self.max_steps = len(self.prices)
         self.stop_loss_level = None
         self.take_profit_level = None
 
@@ -33,11 +33,17 @@ class TradingEnv(gym.Env):
         self.line = self.ax.plot([], [])
         self.animation = None 
 
+    def _download_prices(self):
+        symbol = self.ticker 
+        stock_data = yf.download(symbol, start = self.start_date, end = self.end_date)
+        return stock_data[['Close']]
+
     def reset(self, **kwargs):
         self.current_step = 0
         self.stop_loss_level = None
         self.take_profit_level = None
 
+        self.prices = self._download_prices()
         observation = self._get_observation()
         return observation
 
@@ -109,7 +115,7 @@ class TradingEnv(gym.Env):
 
     def render(self, mode='human'):
         if self.animation is None:
-            self.fig, self.ax = plt.subplots()
+            self.fig, self.ax = plt.subplots(figsize = (10, 6))
             self.ax.set_xlim(self.prices.index[0], self.prices.index[-1])
             self.ax.set_ylim(np.min(self.prices['Close']), np.max(self.prices['Close']))
             self.ax.set_xlabel('Date')
@@ -139,17 +145,22 @@ if __name__ == "__main__":
     )
 
     user_ticker = input("Enter a ticker symbol: ")
+    start_date = input("Enter the start date (YYYY-MM-DD): ")
+    end_date = input("Enter the end date (YYYY-MM-DD): ")
 
-    env = gym.make('TradingEnv-v0', ticker = user_ticker, new_step_api = True)
+    env = gym.make('TradingEnv-v0', ticker = user_ticker, start_date = start_date, 
+                   end_date = end_date, new_step_api = True)
     observation = env.reset()
 
-    for _ in range(env.max_steps):
+    for step in range(env.max_steps):
         action = env.action_space.sample()  
         observation, reward, done, info, _ = env.step(action)
-        print(f"Observation: {observation}")
-        print(f"Reward: {reward}")
-        print(f"Done: {done}")
-        print(f"Info: {info}")
+
+        if step % 1000 == 0:
+            print(f"Observation: {observation}")
+            print(f"Reward: {reward}")
+            print(f"Done: {done}")
+            print(f"Info: {info}")
 
         if done:
             break
