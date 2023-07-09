@@ -1,9 +1,9 @@
 # Q-Trading
 An RL-agent based trading portfolio management program for day trading
 
-# Section 1
+## Section 1
 
-## Trading Environment Readme
+## Trading Environment 
 
 This code implements a custom trading environment using the Gym library. The environment allows for the training and testing of trading strategies using reinforcement learning algorithms.
 
