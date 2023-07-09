@@ -22,7 +22,7 @@ class TradingEnv(gym.Env):
         self.action_space = spaces.Discrete(3) 
 
         self.current_step = 0
-        self.max_steps = 10 
+        self.max_steps = 1000
         self.prices = pd.DataFrame({'Close': np.random.rand(self.max_steps)}, 
                                     index = pd.date_range(start = '2023-01-01', periods = self.max_steps))
         
@@ -107,28 +107,22 @@ class TradingEnv(gym.Env):
 
         return reward
 
-    # STILL WORKING ON THIS :) (help.)
-    def render(self, mode = 'human'):
-        fig, ax = plt.subplots()
-        self.ax = ax
+    def render(self, mode='human'):
+        if self.animation is None:
+            self.fig, self.ax = plt.subplots()
+            self.ax.set_xlim(self.prices.index[0], self.prices.index[-1])
+            self.ax.set_ylim(np.min(self.prices['Close']), np.max(self.prices['Close']))
+            self.ax.set_xlabel('Date')
+            self.ax.set_ylabel('Price')
+            self.ax.set_title('Stock Price')
 
-        ax.set_xlim(self.prices.index[0], self.prices.index[-1])
-        ax.set_ylim(np.min(self.prices['Close']), np.max(self.prices['Close']))
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Price')
-        ax.set_title('Stock Price')
+            self.line, = self.ax.plot([], [])
+            self.animation = FuncAnimation(self.fig, self._animate, frames = len(self.prices), interval=100, blit=False)
 
-        self.line, = ax.plot([], [])
-        plt.ion() 
+            plt.show()
+        else:
+            self.animation.event_source.start()
 
-        for i in range(len(self.prices)):
-            self._animate(i)
-            plt.pause(0.1)
-
-        plt.ioff()  
-        plt.show()
-
-    
     def _animate(self, i):
         current_prices = self.prices.iloc[:i+1]['Close']
         self.line.set_data(current_prices.index, current_prices.values)
@@ -159,8 +153,6 @@ if __name__ == "__main__":
 
         if done:
             break
-    
-    # Broken* -> todo
+
     env.render()
-    
     env.close()
