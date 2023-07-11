@@ -13,6 +13,7 @@ from matplotlib.animation import FuncAnimation
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="gym")
 warnings.filterwarnings("ignore", category=UserWarning, module="gym")
+yf.pdr_override()
 
 class TradingEnv(gym.Env):
     def __init__(self, stock_tickers, portfolio_weights, start_date, end_date):
@@ -93,18 +94,22 @@ class TradingEnv(gym.Env):
             reward = 1.0 
             self.stop_loss_level = current_prices * (1 + stop_loss)
             self.take_profit_level = current_prices * (1 + take_profit)
+
         elif action == 1 and portfolio_change < -sell_threshold:
             reward = -1.0 
             self.stop_loss_level = None
             self.take_profit_level = None
+
         elif self.stop_loss_level is not None and np.any(current_prices <= self.stop_loss_level):
             reward = -1.0 
             self.stop_loss_level = None
             self.take_profit_level = None
+
         elif self.take_profit_level is not None and np.any(current_prices >= self.take_profit_level):
             reward = 1.0  
             self.stop_loss_level = None
             self.take_profit_level = None
+
         else:
             reward = 0.0  
 
