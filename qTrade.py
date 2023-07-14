@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import gym 
 import yfinance
 import numpy as np 
+import matplotlib.pyplot as plt
+
 from tradingEnv_portfolioWeighted import TradingEnv
 
 
@@ -26,7 +28,7 @@ import numpy as np
 learning_rate = 0.1
 discount_factor = 0.9
 epsilon = 0.1
-num_episodes = 1000
+num_episodes = 10
 
 env = TradingEnv(stock_tickers, portfolio_weights, start_date, end_date)
 num_states = env.observation_space.shape[0]
@@ -73,6 +75,22 @@ while not done:
     
     state, reward, done, _ = env.step(action)
     state_str = str(state)
-    env.render()
+    #env.render()
+
+#env.close()
+
+final_stock_weights = portfolio_weights
+if state_str in q_table:
+    action = np.argmax(q_table[state_str])
+    final_stock_weights = env.get_stock_weights_from_action(action)
+
+def viz_stock_weights(stock_tickers, stock_weights):
+    plt.bar(stock_tickers, stock_weights)
+    plt.xlabel('Stock tickers')
+    plt.ylabel('Stock weights')
+    plt.title('Final Stock Weights')
+    plt.show()
+
+viz_stock_weights(stock_tickers, final_stock_weights)
 
 env.close()
