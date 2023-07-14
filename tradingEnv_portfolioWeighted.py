@@ -127,33 +127,47 @@ class TradingEnv(gym.Env):
 
         return reward
 
-    def render(self, mode='human'):
+    def render(self, mode = 'human'):
         if self.animation is None:
-            self.fig, self.axes = plt.subplots(nrows = self.num_stocks + 1, figsize=(10, 6), sharex=True)
+            self.fig, self.axes = plt.subplots(
+                nrows=self.num_stocks + 1, figsize = (10, 6), sharex = True, facecolor = 'black'
+            )
+
+            self.fig.patch.set_facecolor('black')
+            for ax in self.axes:
+                ax.set_facecolor('black')
+                ax.grid(color='white', linestyle = 'dotted')
 
             for i, ax in enumerate(self.axes[:-1]):
                 ax.set_ylabel(f'{self.stock_tickers[i]} Price')
-                ax.plot([], [])
+                ax.plot([], [], color='white')
 
             self.axes[-1].set_xlabel('Date')
             self.axes[-1].set_ylabel('Portfolio Value')
-            self.axes[-1].plot([], [])
+            self.axes[-1].plot([], [], color = 'white')
 
             self.animation = FuncAnimation(
-                self.fig, self._animate, frames = len(self.prices), interval = 100, blit = False
+                self.fig, self._animate, frames=len(self.prices), interval=100, blit=False
             )
 
             plt.tight_layout()
             plt.show()
-
         self.animation.event_source.start()
 
+
     def _animate(self, i):
-        current_prices = self.prices.iloc[:i+1]
+        current_prices = self.prices.iloc[:i + 1]
 
         for ax, stock_prices, ticker in zip(self.axes[:-1], current_prices.values.T, self.stock_tickers):
             ax.lines[0].set_data(current_prices.index, stock_prices)
             ax.lines[0].set_color(get_stock_color(ticker))
+
+            # Set neon color for axis labels
+            ax.spines['left'].set_color('lime')
+            ax.spines['bottom'].set_color('lime')
+            ax.tick_params(axis = 'both', colors = 'lime')
+            ax.yaxis.label.set_color('lime')
+            ax.xaxis.label.set_color('lime')
 
         portfolio_values = np.dot(current_prices.values, self.portfolio_weights)
         self.axes[-1].lines[0].set_data(current_prices.index, portfolio_values)
@@ -163,15 +177,26 @@ class TradingEnv(gym.Env):
         increasing = np.where(diffs >= 0)[0] + 1
 
         self.axes[-1].fill_between(current_prices.index, 0, portfolio_values, color = 'lightblue')
-        self.axes[-1].fill_between(current_prices.index, 0, portfolio_values, where = portfolio_values >= 0, color='lightblue')
-        self.axes[-1].fill_between(current_prices.index, 0, portfolio_values, where = portfolio_values < 0, color='red')
+        self.axes[-1].fill_between(current_prices.index, 0, portfolio_values, where = portfolio_values >= 0, color = 'lightblue')
+        self.axes[-1].fill_between(current_prices.index, 0, portfolio_values, where = portfolio_values < 0, color = 'red')
 
         date_formatter = mdates.DateFormatter('%Y-%m-%d')
         self.axes[-1].xaxis.set_major_formatter(date_formatter)
 
+        # Place portfolio value number at the top
+        self.axes[-1].yaxis.set_label_coords(-0.05, 1.02)
+
+        # Set neon color for portfolio value axis label
+        self.axes[-1].spines['left'].set_color('lime')
+        self.axes[-1].spines['bottom'].set_color('lime')
+        self.axes[-1].tick_params(axis = 'both', colors = 'lime')
+        self.axes[-1].yaxis.label.set_color('lime')
+        self.axes[-1].xaxis.label.set_color('lime')
+
         for ax in self.axes:
             ax.relim()
             ax.autoscale_view()
+
 
     def close(self):
         pass
